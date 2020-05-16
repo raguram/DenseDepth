@@ -5,3 +5,9 @@
 /.vscode
 *.jpg
 *.obj
+.DS_Store
+.idea/
+.ipynb_checkpoints/
+depth/
+test.png
+venv/

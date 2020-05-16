@@ -1,7 +1,12 @@
-from utils import predict
+import utils as DenseDepthUtils
 from matplotlib import pyplot as plt
 import numpy as np
 from PIL import Image
+from os import listdir
+from datetime import datetime
+import math
+from os.path import join
+
 
 class DepthPredictor:
 
@@ -15,11 +20,25 @@ class DepthPredictor:
         """
             Predicts the depth of the image
         """
-        output = predict(self.model, images, batch_size=self.batch_size)
+        output = DenseDepthUtils.predict(self.model, images)
         output = self.__post_process__(output)
         return output
 
+    def predict_all_images_from_folder(self, images_folder, out_write):
 
+        files = [f for f in listdir(images_folder)]
+        print(f"Total number of files: {len(files)}")
+
+        for batchNumber in range(math.ceil(len(files) / self.batch_size)):
+            start_time = datetime.now()
+            batch_start_idx = batchNumber * self.batch_size
+
+            batch_files = [join(images_folder, f) for f in files[batch_start_idx: batch_start_idx + self.batch_size]]
+            images = load_images(batch_files)
+            batch_output = self.predict(images)
+
+            out_write(batch_output, files[batch_start_idx: batch_start_idx + self.batch_size])
+            print(f"Processed batch {batchNumber}. Time Taken: {datetime.now() - start_time}")
 
     def __post_process__(self, images):
         plasma = plt.get_cmap('gray')
@@ -36,12 +55,9 @@ class DepthPredictor:
 
 
 if __name__ == "__main__":
-    from cnnlib import ImageUtils
-
-    from utils import predict, load_images
+    from utils import load_images
     from keras.models import load_model
     from layers import BilinearUpSampling2D
-    from zipfile import ZipFile
     from cnnlib import ImageDao
 
     custom_objects = {'BilinearUpSampling2D': BilinearUpSampling2D, 'depth_loss_function': None}
@@ -52,12 +68,7 @@ if __name__ == "__main__":
     model = load_model("nyu.h5", custom_objects=custom_objects, compile=False)
 
     print('\nModel loaded ({0}).'.format("nyu.h5"))
-    predictor = DepthPredictor(model, batch_size=2)
+    predictor = DepthPredictor(model, batch_size=12)
 
-    output = predictor.predict(load_images(["examples/1_image.png"]))
-    ImageUtils.showImages(output)
-
-    zipFile = ZipFile("/tmp/output.zip", "a")
-    names = ImageDao.persistToZip(output, zipFile, "depth")
-    print(names)
-    zipFile.close()
+    persister = ImageDao.ZipFileImagePersister("examples.zip", "depth")
+    predictor.predict_all_images_from_folder("examples", persister)
