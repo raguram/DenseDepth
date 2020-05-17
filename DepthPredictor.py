@@ -6,6 +6,7 @@ from os import listdir
 from datetime import datetime
 import math
 from os.path import join
+from zipfile import ZipFile
 
 
 class DepthPredictor:
@@ -70,5 +71,7 @@ if __name__ == "__main__":
     print('\nModel loaded ({0}).'.format("nyu.h5"))
     predictor = DepthPredictor(model, batch_size=12)
 
-    persister = ImageDao.ZipFileImagePersister("examples.zip", "depth")
+    zip = ZipFile("examples.zip", "a")
+    persister = ImageDao.ZipFileImagePersister(zip, "depth")
     predictor.predict_all_images_from_folder("examples", persister)
+    zip.close()
