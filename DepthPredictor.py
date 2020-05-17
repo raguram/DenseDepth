@@ -7,7 +7,6 @@ from datetime import datetime
 import math
 from os.path import join
 from zipfile import ZipFile
-from utils import load_images
 
 class DepthPredictor:
 
@@ -35,7 +34,7 @@ class DepthPredictor:
             batch_start_idx = batchNumber * self.batch_size
 
             batch_files = [join(images_folder, f) for f in files[batch_start_idx: batch_start_idx + self.batch_size]]
-            images = load_images(batch_files)
+            images = DenseDepthUtils.load_images(batch_files)
             batch_output = self.predict(images)
 
             out_write(batch_output, files[batch_start_idx: batch_start_idx + self.batch_size])
