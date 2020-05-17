@@ -7,7 +7,7 @@ from datetime import datetime
 import math
 from os.path import join
 from zipfile import ZipFile
-
+from utils import load_images
 
 class DepthPredictor:
 
@@ -38,7 +38,7 @@ class DepthPredictor:
             images = load_images(batch_files)
             batch_output = self.predict(images)
 
-            out_write(batch_output)
+            out_write(batch_output, files[batch_start_idx: batch_start_idx + self.batch_size])
             print(f"Processed batch {batchNumber}. Time Taken: {datetime.now() - start_time}")
 
     def __post_process__(self, images):
